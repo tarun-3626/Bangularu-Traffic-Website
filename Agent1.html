@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bengaluru Pulse | Live City Intelligence</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        #map { height: 400px; }
+        .pulse-dot {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(0.95); opacity: 0.7; }
+            70% { transform: scale(1.3); opacity: 0.3; }
+            100% { transform: scale(0.95); opacity: 0.7; }
+        }
+        .sentiment-positive { background-color: rgba(74, 222, 128, 0.2); }
+        .sentiment-negative { background-color: rgba(248, 113, 113, 0.2); }
+        .sentiment-neutral { background-color: rgba(209, 213, 219, 0.2); }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- Navigation -->
+    <nav class="bg-blue-800 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fas fa-heartbeat text-2xl"></i>
+                <h1 class="text-xl font-bold">Bengaluru Pulse</h1>
+            </div>
+            <div class="hidden md:flex space-x-6">
+                <a href="#" class="hover:text-blue-200">Dashboard</a>
+                <a href="#" class="hover:text-blue-200">Report</a>
+                <a href="#" class="hover:text-blue-200">Alerts</a>
+                <a href="#" class="hover:text-blue-200">Trends</a>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg flex items-center">
+                    <i class="fas fa-bell mr-2"></i>
+                    <span class="hidden md:inline">Alerts</span>
+                </button>
+                <button class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg flex items-center">
+                    <i class="fas fa-user mr-2"></i>
+                    <span class="hidden md:inline">Login</span>
+                </button>
+                <button class="md:hidden">
+                    <i class="fas fa-bars text-2xl"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="bg-gradient-to-r from-blue-900 to-blue-700 text-white py-12">
+        <div class="container mx-auto px-4 text-center">
+            <h1 class="text-4xl md:text-5xl font-bold mb-4">Live Intelligence for Bengaluru</h1>
+            <p class="text-xl mb-8">Synthesizing the city's pulse from thousands of data points</p>
+            <div class="max-w-3xl mx-auto bg-white/10 backdrop-blur-sm rounded-xl p-6">
+                <div class="flex flex-col md:flex-row gap-4">
+                    <input type="text" placeholder="Search by location or event..." class="flex-grow px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                    <button class="bg-blue-500 hover:bg-blue-600 px-6 py-3 rounded-lg font-semibold flex items-center justify-center">
+                        <i class="fas fa-search mr-2"></i> Search
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Left Column - Map and Summary -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Map Section -->
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                    <div class="p-4 border-b border-gray-200 flex justify-between items-center">
+                        <h2 class="text-xl font-semibold">Live City Map</h2>
+                        <div class="flex space-x-2">
+                            <button class="bg-gray-100 hover:bg-gray-200 p-2 rounded-lg">
+                                <i class="fas fa-layer-group"></i>
+                            </button>
+                            <button class="bg-gray-100 hover:bg-gray-200 p-2 rounded-lg">
+                                <i class="fas fa-filter"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="map" class="w-full"></div>
+                    <div class="p-4 border-t border-gray-200 flex flex-wrap gap-2">
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                            <span class="w-2 h-2 mr-2 rounded-full bg-green-500"></span>
+                            Traffic: 32 incidents
+                        </span>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                            <span class="w-2 h-2 mr-2 rounded-full bg-red-500"></span>
+                            Civic Issues: 18 reports
+                        </span>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                            <span class="w-2 h-2 mr-2 rounded-full bg-blue-500"></span>
+                            Events: 7 happening
+                        </span>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
+                            <span class="w-2 h-2 mr-2 rounded-full bg-yellow-500"></span>
+                            Alerts: 5 active
+                        </span>
+                    </div>
+                </div>
+
+                <!-- AI Summary Section -->
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                    <div class="p-4 border-b border-gray-200">
+                        <h2 class="text-xl font-semibold flex items-center">
+                            <i class="fas fa-brain mr-2 text-blue-600"></i>
+                            AI-Generated City Summary
+                        </h2>
+                        <p class="text-sm text-gray-500">Updated 2 minutes ago from 47 sources</p>
+                    </div>
+                    <div class="p-4 space-y-4">
+                        <div class="p-4 rounded-lg border border-blue-100 bg-blue-50">
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0 pt-1">
+                                    <div class="w-3 h-3 rounded-full bg-red-500 pulse-dot"></div>
+                                </div>
+                                <div class="ml-3">
+                                    <h3 class="font-medium text-gray-900">Traffic Alert: Old Airport Road</h3>
+                                    <p class="mt-1 text-sm text-gray-700">Multiple reports indicate heavy congestion between Marathahalli and Domlur due to ongoing metro construction. Estimated delay: 25-40 mins. Alternative routes via HAL Airport Road or Varthur Road are flowing better.</p>
+                                    <div class="mt-2 flex items-center text-sm text-gray-500">
+                                        <i class="fas fa-clock mr-1"></i>
+                                        <span>Started 45 mins ago</span>
+                                        <span class="mx-2">•</span>
+                                        <i class="fas fa-thumbs-up mr-1"></i>
+                                        <span>87% accuracy</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="p-4 rounded-lg border border-green-100 bg-green-50">
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0 pt-1">
+                                    <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                                </div>
+                                <div class="ml-3">
+                                    <h3 class="font-medium text-gray-900">Cultural Event: Street Art Festival</h3>
+                                    <p class="mt-1 text-sm text-gray-700">Church Street is hosting a weekend-long street art festival with live mural painting, performances, and food stalls. Event runs from 10AM to 9PM today and tomorrow. Parking limited - recommend metro (MG Road station).</p>
+                                    <div class="mt-2 flex items-center text-sm text-gray-500">
+                                        <i class="fas fa-clock mr-1"></i>
+                                        <span>Ongoing</span>
+                                        <span class="mx-2">•</span>
+                                        <i class="fas fa-thumbs-up mr-1"></i>
+                                        <span>94% accuracy</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="p-4 rounded-lg border border-yellow-100 bg-yellow-50">
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0 pt-1">
+                                    <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                </div>
+                                <div class="ml-3">
+                                    <h3 class="font-medium text-gray-900">Civic Issue: Water Logging</h3>
+                                    <p class="mt-1 text-sm text-gray-700">Several reports of water accumulation in Koramangala 5th Block after last night's rains. BBMP has been alerted and pumps are being deployed. Avoid low-lying areas near Sony Signal.</p>
+                                    <div class="mt-2 flex items-center text-sm text-gray-500">
+                                        <i class="fas fa-clock mr-1"></i>
+                                        <span>Started 3 hours ago</span>
+                                        <span class="mx-2">•</span>
+                                        <i class="fas fa-thumbs-up mr-1"></i>
+                                        <span>76% accuracy</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column - Reports and Trends -->
+            <div class="space-y-6">
+                <!-- Report Incident Card -->
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                    <div class="p-4 border-b border-gray-200">
+                        <h2 class="text-xl font-semibold flex items-center">
+                            <i class="fas fa-plus-circle mr-2 text-blue-600"></i>
+                            Report an Incident
+                        </h2>
+                    </div>
+                    <div class="p-4 space-y-4">
+                        <button class="w-full bg-blue-100 hover:bg-blue-200 text-blue-800 py-3 px-4 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-camera mr-2"></i>
+                            Upload Photo/Video
+                        </button>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button class="bg-red-100 hover:bg-red-200 text-red-800 py-2 px-3 rounded-lg flex items-center justify-center text-sm">
+                                <i class="fas fa-car-crash mr-1"></i>
+                                Accident
+                            </button>
+                            <button class="bg-yellow-100 hover:bg-yellow-200 text-yellow-800 py-2 px-3 rounded-lg flex items-center justify-center text-sm">
+                                <i class="fas fa-traffic-light mr-1"></i>
+                                Traffic
+                            </button>
+                            <button class="bg-green-100 hover:bg-green-200 text-green-800 py-2 px-3 rounded-lg flex items-center justify-center text-sm">
+                                <i class="fas fa-tree mr-1"></i>
+                                Environment
+                            </button>
+                            <button class="bg-purple-100 hover:bg-purple-200 text-purple-800 py-2 px-3 rounded-lg flex items-center justify-center text-sm">
+                                <i class="fas fa-music mr-1"></i>
+                                Event
+                            </button>
+                        </div>
+                        <textarea class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400" rows="3" placeholder="Describe what's happening..."></textarea>
+                        <button class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium">
+                            Submit Report
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Trends Section -->
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                    <div class="p-4 border-b border-gray-200">
+                        <h2 class="text-xl font-semibold flex items-center">
+                            <i class="fas fa-chart-line mr-2 text-blue-600"></i>
+                            Emerging Trends
+                        </h2>
+                    </div>
+                    <div class="p-4 space-y-4">
+                        <div class="p-3 rounded-lg sentiment-positive">
+                            <div class="flex justify-between">
+                                <span class="font-medium">Metro Disruptions</span>
+                                <span class="text-sm bg-green-100 text-green-800 px-2 py-1 rounded">+42%</span>
+                            </div>
+                            <div class="h-2 w-full bg-gray-200 rounded-full mt-2">
+                                <div class="h-2 bg-green-500 rounded-full" style="width: 70%"></div>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">Increased reports about Purple Line delays</p>
+                        </div>
+                        
+                        <div class="p-3 rounded-lg sentiment-negative">
+                            <div class="flex justify-between">
+                                <span class="font-medium">Power Outages</span>
+                                <span class="text-sm bg-red-100 text-red-800 px-2 py-1 rounded">+28%</span>
+                            </div>
+                            <div class="h-2 w-full bg-gray-200 rounded-full mt-2">
+                                <div class="h-2 bg-red-500 rounded-full" style="width: 45%"></div>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">HSR Layout, Bellandur most affected</p>
+                        </div>
+                        
+                        <div class="p-3 rounded-lg sentiment-neutral">
+                            <div class="flex justify-between">
+                                <span class="font-medium">Cultural Events</span>
+                                <span class="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded">+15%</span>
+                            </div>
+                            <div class="h-2 w-full bg-gray-200 rounded-full mt-2">
+                                <div class="h-2 bg-blue-500 rounded-full" style="width: 30%"></div>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">Weekend street festivals trending</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Predictive Alerts -->
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                    <div class="p-4 border-b border-gray-200">
+                        <h2 class="text-xl font-semibold flex items-center">
+                            <i class="fas fa-bolt mr-2 text-blue-600"></i>
+                            Predictive Alerts
+                        </h2>
+                    </div>
+                    <div class="p-4 space-y-3">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 mt-1">
+                                <div class="w-2 h-2 rounded-full bg-red-500 pulse-dot"></div>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm font-medium">Potential water shortage in Whitefield area tomorrow</p>
+                                <p class="text-xs text-gray-500">Based on 18 pump maintenance reports</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 mt-1">
+                                <div class="w-2 h-2 rounded-full bg-yellow-500"></div>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm font-medium">Increased traffic expected near Manyata Tech Park</p>
+                                <p class="text-xs text-gray-500">Company shuttle schedule changes detected</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 mt-1">
+                                <div class="w-2 h-2 rounded-full bg-green-500"></div>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm font-medium">Community cleanup drive planned in Jayanagar</p>
+                                <p class="text-xs text-gray-500">Volunteer signups increasing</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Bengaluru Pulse</h3>
+                    <p class="text-gray-400">Harnessing AI to make sense of the city's chaos.</p>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Quick Links</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white">About</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">API</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Contribute</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Resources</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white">BBMP</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Traffic Police</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Emergency</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Connect</h3>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-facebook"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-linkedin"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-8 pt-8 text-center text-gray-400">
+                <p>© 2023 Bengaluru Pulse. Powered by Google AI and Firebase.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Initialize map
+        const map = L.map('map').setView([12.9716, 77.5946], 12);
+        
+        // Add tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        // Add sample markers
+        const trafficIcon = L.divIcon({
+            className: 'pulse-dot',
+            html: '<div class="w-4 h-4 rounded-full bg-red-500"></div>',
+            iconSize: [12, 12]
+        });
+
+        const eventIcon = L.divIcon({
+            className: '',
+            html: '<div class="w-4 h-4 rounded-full bg-green-500"></div>',
+            iconSize: [12, 12]
+        });
+
+        const issueIcon = L.divIcon({
+            className: '',
+            html: '<div class="w-4 h-4 rounded-full bg-yellow-500"></div>',
+            iconSize: [12, 12]
+        });
+
+        // Sample markers for different locations
+        L.marker([12.9615, 77.6446], {icon: trafficIcon}).addTo(map)
+            .bindPopup('<b>Traffic Jam</b><br>Old Airport Road near Domlur');
+
+        L.marker([12.9784, 77.6408], {icon: eventIcon}).addTo(map)
+            .bindPopup('<b>Street Art Festival</b><br>Church Street');
+
+        L.marker([12.9352, 77.6245], {icon: issueIcon}).addTo(map)
+            .bindPopup('<b>Water Logging</b><br>Koramangala 5th Block');
+
+        L.marker([12.9858, 77.6225], {icon: trafficIcon}).addTo(map)
+            .bindPopup('<b>Accident</b><br>Outer Ring Road near Marathahalli');
+
+        L.marker([12.9141, 77.6846], {icon: issueIcon}).addTo(map)
+            .bindPopup('<b>Power Outage</b><br>HSR Layout Sector 2');
+
+        // Responsive adjustments
+        function handleResize() {
+            if (window.innerWidth < 768) {
+                map.setView([12.9716, 77.5946], 11);
+            } else {
+                map.setView([12.9716, 77.5946], 12);
+            }
+        }
+
+        window.addEventListener('resize', handleResize);
+        handleResize();
+    </script>
+</body>
+</html>
